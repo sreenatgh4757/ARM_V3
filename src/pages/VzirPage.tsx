@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import VzirHero from '../components/vzir/VzirHero';
+import VzirAbout from '../components/vzir/VzirAbout';
 import VzirDataSources from '../components/vzir/VzirDataSources';
 import VzirHowItWorks from '../components/vzir/VzirHowItWorks';
 import VzirPilotCTA from '../components/vzir/VzirPilotCTA';
@@ -22,6 +23,7 @@ export default function VzirPage() {
   return (
     <>
       <VzirHero />
+      <VzirAbout />
       <VzirDataSources />
       <VzirHowItWorks />
       <VzirPilotCTA />

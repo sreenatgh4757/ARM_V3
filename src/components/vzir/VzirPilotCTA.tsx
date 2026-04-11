@@ -1,59 +1,98 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { supabase } from '../../lib/supabase';
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] } },
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] as const } },
 };
-const stagger = { visible: { transition: { staggerChildren: 0.12 } } };
+const stagger = { visible: { transition: { staggerChildren: 0.1 } } };
 
-const inputStyle = {
-  width: '100%',
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: '8px',
-  padding: '12px 16px',
-  color: '#FAFAFA',
-  fontFamily: 'Plus Jakarta Sans, sans-serif',
-  fontSize: '16px',
-  outline: 'none',
-  transition: 'border-color 0.2s',
-  boxSizing: 'border-box' as const,
-};
+function isValidEmail(email: string): boolean {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  if (!re.test(email)) return false;
+  const disposable = ['mailinator.com', 'tempmail.com', 'throwaway.email', 'guerrillamail.com', 'yopmail.com'];
+  const domain = email.split('@')[1]?.toLowerCase();
+  return !disposable.includes(domain);
+}
 
 export default function VzirPilotCTA() {
-  const [formData, setFormData] = useState({ name: '', email: '', hotel: '', rooms: '', message: '' });
-  const [submitted, setSubmitted] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', hotel: '', message: '' });
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'invalid-email' | 'duplicate'>('idle');
+  const [emailTouched, setEmailTouched] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const emailValid = formData.email === '' || isValidEmail(formData.email);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+
+    if (!isValidEmail(formData.email)) {
+      setStatus('invalid-email');
+      return;
+    }
+
+    setStatus('loading');
+
+    const { error } = await supabase.from('vzir_pilot_signups').insert({
+      name: formData.name,
+      email: formData.email.toLowerCase().trim(),
+      hotel_name: formData.hotel,
+      message: formData.message,
+    });
+
+    if (error) {
+      if (error.code === '23505') {
+        setStatus('duplicate');
+      } else {
+        setStatus('error');
+      }
+      return;
+    }
+
+    setStatus('success');
   };
 
   return (
-    <section id="pilot" style={{ position: 'relative', padding: 'clamp(60px, 8vw, 120px) 0', overflow: 'hidden' }}>
-      <div style={{
-        position: 'absolute', inset: 0,
-        backgroundImage: 'url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920)',
-        backgroundSize: 'cover', backgroundPosition: 'center',
-      }} />
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(9,9,11,0.88)' }} />
+    <section
+      id="pilot"
+      className="relative py-24 lg:py-32 overflow-hidden"
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: 'url(https://images.pexels.com/photos/1181467/pexels-photo-1181467.jpeg?auto=compress&cs=tinysrgb&w=1920)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
+      <div className="absolute inset-0 bg-[#09090B]/90" />
 
-      <div className="relative z-10 max-w-[1400px] mx-auto px-5 lg:px-20">
+      <div className="relative z-10 max-w-[1200px] mx-auto px-6 lg:px-20">
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{ once: true, margin: '-60px' }}
           variants={stagger}
-          style={{ textAlign: 'center', marginBottom: '48px' }}
+          className="text-center mb-12"
         >
-          <motion.p variants={fadeUp} className="font-mono" style={{ fontSize: '11px', color: '#2DD4BF', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '16px' }}>
-            EARLY ACCESS
+          <motion.p
+            variants={fadeUp}
+            className="font-mono text-[10px] tracking-[3px] uppercase text-[#2DD4BF] mb-4"
+          >
+            Early Access
           </motion.p>
-          <motion.h2 variants={fadeUp} style={{ fontFamily: 'Sora, sans-serif', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 44px)', color: '#FAFAFA', marginBottom: '16px' }}>
+          <motion.h2
+            variants={fadeUp}
+            className="font-display text-[#FAFAFA] mb-4"
+            style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 700, lineHeight: 1.1 }}
+          >
             Be one of the first 20.
           </motion.h2>
-          <motion.p variants={fadeUp} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 'clamp(15px, 2vw, 17px)', color: '#A1A1AA', maxWidth: '440px', margin: '0 auto', lineHeight: 1.6 }}>
+          <motion.p
+            variants={fadeUp}
+            className="font-body text-[#A1A1AA] max-w-sm mx-auto"
+            style={{ fontSize: 'clamp(15px, 1.5vw, 17px)', lineHeight: 1.6 }}
+          >
             60-day pilot. Full access. Direct line to our team.
           </motion.p>
         </motion.div>
@@ -61,68 +100,130 @@ export default function VzirPilotCTA() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{ once: true, margin: '-60px' }}
           variants={fadeUp}
+          className="max-w-md mx-auto rounded-2xl p-8 lg:p-10"
           style={{
-            maxWidth: '480px',
-            margin: '0 auto',
             background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.07)',
-            borderRadius: '16px',
-            padding: 'clamp(24px, 4vw, 40px)',
           }}
         >
-          {submitted ? (
-            <div style={{ textAlign: 'center', padding: '24px 0' }}>
-              <div style={{
-                width: '48px', height: '48px', borderRadius: '50%',
-                background: 'rgba(45,212,191,0.1)', border: '1px solid rgba(45,212,191,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
-              }}>
+          {status === 'success' ? (
+            <div className="text-center py-6">
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{
+                  background: 'rgba(45,212,191,0.1)',
+                  border: '1px solid rgba(45,212,191,0.2)',
+                }}
+              >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2DD4BF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
-              <h3 style={{ fontFamily: 'Sora, sans-serif', fontWeight: 600, fontSize: '20px', color: '#FAFAFA', marginBottom: '8px' }}>Application received.</h3>
-              <p style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '14px', color: '#71717A' }}>We'll be in touch within 24 hours.</p>
+              <h3 className="font-display text-[#FAFAFA] text-xl font-semibold mb-2">
+                Application received.
+              </h3>
+              <p className="font-body text-sm text-[#71717A]">
+                We will be in touch within 24 hours.
+              </p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <input type="text" placeholder="Name" required value={formData.name}
-                onChange={e => setFormData(d => ({ ...d, name: e.target.value }))}
-                style={inputStyle}
-                onFocus={e => { (e.target as HTMLElement).style.borderColor = '#2DD4BF'; }}
-                onBlur={e => { (e.target as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; }} />
-              <input type="email" placeholder="Email" required value={formData.email}
-                onChange={e => setFormData(d => ({ ...d, email: e.target.value }))}
-                style={inputStyle}
-                onFocus={e => { (e.target as HTMLElement).style.borderColor = '#2DD4BF'; }}
-                onBlur={e => { (e.target as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; }} />
-              <input type="text" placeholder="Hotel name" required value={formData.hotel}
-                onChange={e => setFormData(d => ({ ...d, hotel: e.target.value }))}
-                style={inputStyle}
-                onFocus={e => { (e.target as HTMLElement).style.borderColor = '#2DD4BF'; }}
-                onBlur={e => { (e.target as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; }} />
-              <textarea placeholder="Message (optional)" rows={3} value={formData.message}
-                onChange={e => setFormData(d => ({ ...d, message: e.target.value }))}
-                style={{ ...inputStyle, resize: 'vertical' }}
-                onFocus={e => { (e.target as HTMLElement).style.borderColor = '#2DD4BF'; }}
-                onBlur={e => { (e.target as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; }} />
-              <button type="submit" style={{
-                width: '100%', background: '#14B8A6', color: '#09090B',
-                fontFamily: 'Sora, sans-serif', fontWeight: 600, fontSize: '14px',
-                padding: '14px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                transition: 'background 0.2s', marginTop: '4px', minHeight: '48px',
-              }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#0D9488'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#14B8A6'; }}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <input
+                type="text"
+                placeholder="Name"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData((d) => ({ ...d, name: e.target.value }))}
+                className="w-full rounded-lg px-4 py-3 text-sm font-body text-[#FAFAFA] outline-none transition-colors duration-200 focus:border-[#2DD4BF]"
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                }}
+              />
+
+              <div>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData((d) => ({ ...d, email: e.target.value }))}
+                  onBlur={() => setEmailTouched(true)}
+                  className="w-full rounded-lg px-4 py-3 text-sm font-body text-[#FAFAFA] outline-none transition-colors duration-200 focus:border-[#2DD4BF]"
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${emailTouched && !emailValid ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.07)'}`,
+                  }}
+                />
+                {emailTouched && !emailValid && (
+                  <p className="font-body text-xs text-red-400 mt-1.5 ml-1">
+                    Please enter a valid email address.
+                  </p>
+                )}
+                {status === 'invalid-email' && (
+                  <p className="font-body text-xs text-red-400 mt-1.5 ml-1">
+                    Please enter a valid email address.
+                  </p>
+                )}
+                {status === 'duplicate' && (
+                  <p className="font-body text-xs text-amber-400 mt-1.5 ml-1">
+                    This email is already registered for the pilot.
+                  </p>
+                )}
+              </div>
+
+              <input
+                type="text"
+                placeholder="Hotel name"
+                value={formData.hotel}
+                onChange={(e) => setFormData((d) => ({ ...d, hotel: e.target.value }))}
+                className="w-full rounded-lg px-4 py-3 text-sm font-body text-[#FAFAFA] outline-none transition-colors duration-200 focus:border-[#2DD4BF]"
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                }}
+              />
+
+              <textarea
+                placeholder="Message (optional)"
+                rows={3}
+                value={formData.message}
+                onChange={(e) => setFormData((d) => ({ ...d, message: e.target.value }))}
+                className="w-full rounded-lg px-4 py-3 text-sm font-body text-[#FAFAFA] outline-none transition-colors duration-200 resize-y focus:border-[#2DD4BF]"
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                }}
+              />
+
+              <button
+                type="submit"
+                disabled={status === 'loading'}
+                className="w-full font-display font-semibold text-sm py-3.5 rounded-lg border-none cursor-pointer transition-colors duration-200 mt-1 hover:bg-[#0D9488] disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{
+                  background: '#14B8A6',
+                  color: '#09090B',
+                  minHeight: '48px',
+                }}
               >
-                Apply for the pilot &rarr;
+                {status === 'loading' ? 'Submitting...' : 'Apply for the pilot'}
               </button>
+
+              {status === 'error' && (
+                <p className="font-body text-xs text-red-400 text-center">
+                  Something went wrong. Please try again.
+                </p>
+              )}
             </form>
           )}
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <a href="mailto:hello@armtechnologies.ltd" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '13px', color: '#2DD4BF', textDecoration: 'none' }}>
+
+          <div className="text-center mt-5">
+            <a
+              href="mailto:info@armtechnologies.ltd"
+              className="font-body text-xs text-[#2DD4BF] no-underline hover:underline"
+            >
               info@armtechnologies.ltd
             </a>
           </div>
