@@ -1,17 +1,15 @@
 import Hero from '../components/home/Hero';
-import ProductShowcase from '../components/home/ProductShowcase';
-import GigSearchFootnote from '../components/home/GigSearchFootnote';
-import BusinessTeaser from '../components/home/BusinessTeaser';
-import HomeContact from '../components/home/HomeContact';
+import FeaturesSection from '../components/home/FeaturesSection';
+import VzirSection from '../components/home/VzirSection';
+import CTASection from '../components/home/CTASection';
 
 export default function HomePage() {
   return (
     <>
       <Hero />
-      <ProductShowcase />
-      <GigSearchFootnote />
-      <BusinessTeaser />
-      <HomeContact />
+      <FeaturesSection />
+      <VzirSection />
+      <CTASection />
     </>
   );
 }

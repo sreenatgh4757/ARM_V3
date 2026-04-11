@@ -33,7 +33,6 @@ export default function VzirHero() {
         display: 'flex', alignItems: 'center', overflow: 'hidden',
       }}
     >
-      {/* Background */}
       <div
         style={{
           position: 'absolute', inset: 0,
@@ -43,11 +42,9 @@ export default function VzirHero() {
       />
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(9,9,11,0.90)' }} />
 
-      {/* Content */}
       <div className="relative z-10 w-full max-w-[1400px] mx-auto px-5 lg:px-20 py-32">
         <div style={{ maxWidth: '680px' }}>
 
-          {/* Badge */}
           <motion.div
             initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}
@@ -65,15 +62,13 @@ export default function VzirHero() {
               <span
                 style={{
                   width: '7px', height: '7px', borderRadius: '50%', background: '#2DD4BF',
-                  display: 'inline-block',
-                  animation: 'pulse 1.6s ease-in-out infinite',
+                  display: 'inline-block', animation: 'vzirPulse 1.6s ease-in-out infinite',
                 }}
               />
               HOTEL INTELLIGENCE PLATFORM
             </span>
           </motion.div>
 
-          {/* Headline */}
           <motion.h1
             initial={{ opacity: 0, y: 60 }}
             animate={{ opacity: 1, y: 0 }}
@@ -88,7 +83,6 @@ export default function VzirHero() {
             <span style={{ color: '#2DD4BF' }}>anything.</span>
           </motion.h1>
 
-          {/* Rotating question chip */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -127,11 +121,10 @@ export default function VzirHero() {
             </div>
           </motion.div>
 
-          {/* Description */}
           <motion.p
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ duration: 0.7, delay: 0.3 }}
             style={{
               fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 300,
               fontSize: 'clamp(15px, 1.8vw, 17px)', color: '#A1A1AA',
@@ -141,25 +134,18 @@ export default function VzirHero() {
             Vzir connects your PMS, bookings, revenue, guest messages, flights, local events, weather, and competitor rates into one AI — and answers any question in plain English, instantly.
           </motion.p>
 
-          {/* Pilot badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '36px' }}
           >
-            <span
-              style={{
-                width: '8px', height: '8px', borderRadius: '50%', background: '#22C55E',
-                display: 'inline-block', flexShrink: 0,
-              }}
-            />
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22C55E', display: 'inline-block', flexShrink: 0 }} />
             <span style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '13px', color: '#71717A' }}>
               60-day pilot · Now onboarding UK hotels · Read-only access
             </span>
           </motion.div>
 
-          {/* CTAs */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -173,17 +159,10 @@ export default function VzirHero() {
                 fontFamily: 'Sora, sans-serif', fontWeight: 600, fontSize: '14px',
                 color: '#09090B', background: '#14B8A6',
                 padding: '16px 36px', borderRadius: '12px', border: 'none',
-                cursor: 'pointer', transition: 'background 0.2s, transform 0.2s',
-                minHeight: '52px',
+                cursor: 'pointer', transition: 'background 0.2s, transform 0.2s', minHeight: '52px',
               }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = '#0D9488';
-                (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background = '#14B8A6';
-                (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#0D9488'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#14B8A6'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
             >
               Apply for the pilot ↓
             </button>
@@ -195,8 +174,7 @@ export default function VzirHero() {
                 color: '#FAFAFA', background: 'transparent',
                 border: '1px solid rgba(255,255,255,0.15)',
                 padding: '16px 36px', borderRadius: '12px',
-                cursor: 'pointer', transition: 'background 0.2s',
-                minHeight: '52px',
+                cursor: 'pointer', transition: 'background 0.2s', minHeight: '52px',
               }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
@@ -208,7 +186,7 @@ export default function VzirHero() {
       </div>
 
       <style>{`
-        @keyframes pulse {
+        @keyframes vzirPulse {
           0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(45,212,191,0.6); }
           50% { opacity: 0.6; box-shadow: 0 0 0 5px rgba(45,212,191,0); }
         }
