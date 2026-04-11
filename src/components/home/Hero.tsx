@@ -1,212 +1,134 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
 
-const ROTATING_WORDS = [
-  'your revenue.',
-  'your guests.',
-  'your operations.',
-  'everything.',
-];
+const letterVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.12,
+      duration: 0.6,
+      ease: [0.25, 0.46, 0.45, 0.94] as const,
+    },
+  }),
+};
 
-const COL1_CARDS = [
-  { label: 'Dashboard', color: '#2DD4BF', bg: 'rgba(45,212,191,0.07)', border: 'rgba(45,212,191,0.15)', height: 100 },
-  { label: 'Analytics', color: '#8B5CF6', bg: 'rgba(139,92,246,0.07)', border: 'rgba(139,92,246,0.15)', height: 100 },
-  { label: 'Global', color: '#3B82F6', bg: 'rgba(59,130,246,0.07)', border: 'rgba(59,130,246,0.15)', height: 90 },
-  { label: 'Messaging', color: '#F59E0B', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.15)', height: 110 },
-];
-
-const COL2_CARDS = [
-  { label: 'Forecast', color: '#EC4899', bg: 'rgba(236,72,153,0.07)', border: 'rgba(236,72,153,0.15)', height: 95 },
-  { label: 'Events', color: '#22C55E', bg: 'rgba(34,197,94,0.07)', border: 'rgba(34,197,94,0.15)', height: 105 },
-  { label: 'Aviation', color: '#6366F1', bg: 'rgba(99,102,241,0.07)', border: 'rgba(99,102,241,0.15)', height: 88 },
-  { label: 'Alerts', color: '#EAB308', bg: 'rgba(234,179,8,0.07)', border: 'rgba(234,179,8,0.15)', height: 100 },
-];
-
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
-  return isMobile;
-}
-
-function ScrollCard({ card }: any) {
-  return (
-    <div
-      style={{
-        width: '140px',
-        height: `${card.height}px`,
-        borderRadius: '14px',
-        background: card.bg,
-        border: `1px solid ${card.border}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: card.color,
-        fontSize: '12px',
-        fontFamily: 'Plus Jakarta Sans',
-      }}
-    >
-      {card.label}
-    </div>
-  );
-}
-
-function DesktopCards() {
-  const col1 = [...COL1_CARDS, ...COL1_CARDS];
-  const col2 = [...COL2_CARDS, ...COL2_CARDS];
-
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        right: '5%',
-        top: '50%',
-        transform: 'translateY(-50%)',
-        width: '320px',
-        height: '500px',
-        overflow: 'hidden',
-        maskImage: 'linear-gradient(to bottom, transparent, black 10%, black 90%, transparent)',
-      }}
-    >
-      <div style={{ display: 'flex', gap: '12px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', animation: 'scrollUp 25s linear infinite' }}>
-          {col1.map((c, i) => <ScrollCard key={i} card={c} />)}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', animation: 'scrollDown 30s linear infinite' }}>
-          {col2.map((c, i) => <ScrollCard key={i} card={c} />)}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TextContent({ isMobile, wordIndex }: any) {
-  return (
-    <div style={{ maxWidth: isMobile ? '100%' : '580px', textAlign: isMobile ? 'center' : 'left' }}>
-      
-      {/* FIXED BADGE */}
-      <span
-        style={{
-          fontSize: isMobile ? '8px' : '10px',
-          background: 'rgba(45,212,191,0.08)',
-          color: '#2DD4BF',
-          padding: '6px 14px',
-          borderRadius: '9999px',
-          letterSpacing: isMobile ? '2px' : '3px',
-          display: 'inline-block',
-          whiteSpace: 'normal',
-          marginBottom: '20px',
-        }}
-      >
-        BUILDING THE FUTURE OF HOTEL INTELLIGENCE
-      </span>
-
-      {/* HEADLINE */}
-      <h1
-        style={{
-          fontFamily: 'Sora',
-          fontWeight: 700,
-          fontSize: isMobile ? '34px' : 'clamp(42px,5vw,64px)',
-          color: '#FAFAFA',
-          lineHeight: 1.1,
-        }}
-      >
-        We build software
-        <br />
-        that thinks for
-        <br />
-        <span style={{ color: '#2DD4BF' }}>
-          <AnimatePresence mode="wait">
-            <motion.span key={wordIndex}>
-              {ROTATING_WORDS[wordIndex]}
-            </motion.span>
-          </AnimatePresence>
-        </span>
-      </h1>
-
-      {/* TEXT */}
-      <p style={{ color: '#A1A1AA', marginTop: '20px', lineHeight: 1.7 }}>
-        A.R.M Technologies builds AI-powered products for the hospitality industry.
-        Vzir connects to every system your hotel uses and answers questions in plain English.
-      </p>
-
-      {/* BUTTONS */}
-      <div style={{ marginTop: '28px', display: 'flex', gap: '12px', flexDirection: isMobile ? 'column' : 'row' }}>
-        <Link to="/vzir" style={{ background: '#14B8A6', padding: '14px 28px', borderRadius: '10px', color: '#000' }}>
-          Explore Vzir →
-        </Link>
-        <button style={{ border: '1px solid #333', padding: '14px 28px', borderRadius: '10px', color: '#fff' }}>
-          Get in touch →
-        </button>
-      </div>
-    </div>
-  );
-}
+const colors = ['#2DD4BF', '#0891B2', '#0369A1', '#0284C7'];
 
 export default function Hero() {
-  const [wordIndex, setWordIndex] = useState(0);
-  const isMobile = useIsMobile();
+  const scrollToNext = () => {
+    const el = document.getElementById('features');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setWordIndex(i => (i + 1) % ROTATING_WORDS.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
+  const vzirLetters = ['V', 'z', 'i', 'r'];
 
   return (
-    <>
-      <style>{`
-        @keyframes scrollUp {
-          0% { transform: translateY(0); }
-          100% { transform: translateY(-50%); }
-        }
-        @keyframes scrollDown {
-          0% { transform: translateY(-50%); }
-          100% { transform: translateY(0); }
-        }
-      `}</style>
+    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#09090B]">
+      <div
+        className="absolute inset-0 -z-10"
+        style={{
+          backgroundImage: 'url(https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&cs=tinysrgb&w=1920)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#09090B]/70 via-[#09090B]/85 to-[#09090B]/95" />
 
-      <div style={{ position: 'relative', minHeight: '100vh', background: '#09090B', display: 'flex', alignItems: 'center' }}>
-        
-        {/* BG */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: 'url(https://images.unsplash.com/photo-1639322537228-f710d846310a?w=1920)',
-          backgroundSize: 'cover'
-        }} />
+      <div className="relative z-10 px-6 lg:px-20 py-20 lg:py-0 max-w-6xl mx-auto text-center">
+        <motion.p
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="font-body text-[13px] tracking-[4px] uppercase text-[#A1A1AA] mb-12"
+        >
+          Advanced Technology Solutions
+        </motion.p>
 
-        {/* OVERLAY */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          background: isMobile
-            ? 'rgba(9,9,11,0.92)'
-            : 'linear-gradient(to right, rgba(9,9,11,0.97), rgba(9,9,11,0.6))'
-        }} />
-
-        {/* CONTENT */}
-        <div style={{
-          position: 'relative',
-          zIndex: 10,
-          width: '100%',
-          maxWidth: '1400px',
-          margin: '0 auto',
-          padding: isMobile ? '0 20px' : '0 8%',
-          paddingTop: '100px'
-        }}>
-          <TextContent isMobile={isMobile} wordIndex={wordIndex} />
+        <div className="mb-12 flex justify-center items-end gap-2 lg:gap-6">
+          {vzirLetters.map((letter, i) => (
+            <motion.div
+              key={i}
+              custom={i}
+              initial="hidden"
+              animate="visible"
+              variants={letterVariants}
+            >
+              <div
+                className="font-display font-bold leading-none text-center"
+                style={{
+                  fontSize: 'clamp(48px, 15vw, 140px)',
+                  color: colors[i],
+                  textShadow: `0 0 30px ${colors[i]}20`,
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                {letter}
+              </div>
+            </motion.div>
+          ))}
         </div>
 
-        {/* CARDS */}
-        {!isMobile && <DesktopCards />}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.6 }}
+          className="font-body text-[#A1A1AA] max-w-2xl mx-auto mb-10"
+          style={{ fontSize: 'clamp(16px, 2vw, 20px)', lineHeight: 1.7 }}
+        >
+          Intelligent software solutions for the modern hospitality industry.
+          <br />
+          <span className="text-[#71717A]">
+            Powered by advanced AI and real-time data integration.
+          </span>
+        </motion.p>
+
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.8 }}
+          onClick={() => {
+            const el = document.getElementById('vzir');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }}
+          className="font-body font-semibold text-sm px-8 lg:px-10 py-4 rounded-xl border-none cursor-pointer transition-all duration-200 mb-20"
+          style={{
+            background: 'linear-gradient(135deg, #2DD4BF, #0891B2)',
+            color: '#09090B',
+            minHeight: '52px',
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+            (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 24px rgba(45,212,191,0.2)';
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+            (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+          }}
+        >
+          Explore Vzir →
+        </motion.button>
+
+        <motion.button
+          onClick={scrollToNext}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 1.2 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 group"
+          style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+        >
+          <span className="font-body text-[11px] tracking-[2px] uppercase text-[#71717A] group-hover:text-[#A1A1AA] transition-colors">
+            Scroll
+          </span>
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <ChevronDown size={20} className="text-[#2DD4BF]" />
+          </motion.div>
+        </motion.button>
       </div>
-    </>
+    </section>
   );
 }
