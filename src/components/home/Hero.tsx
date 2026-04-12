@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 const TAGLINES = [
@@ -100,6 +100,27 @@ function MiniChat() {
 
 export default function Hero() {
   const [tagIdx, setTagIdx] = useState(0);
+  const heroRef = useRef<HTMLElement>(null);
+
+  // Cursor glow (base44-style)
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const glowX = useSpring(mouseX, { stiffness: 60, damping: 20 });
+  const glowY = useSpring(mouseY, { stiffness: 60, damping: 20 });
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    const rect = heroRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    mouseX.set(e.clientX - rect.left);
+    mouseY.set(e.clientY - rect.top);
+  }, [mouseX, mouseY]);
+
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el) return;
+    el.addEventListener('mousemove', handleMouseMove);
+    return () => el.removeEventListener('mousemove', handleMouseMove);
+  }, [handleMouseMove]);
 
   useEffect(() => {
     const t = setInterval(() => setTagIdx(i => (i + 1) % TAGLINES.length), 2600);
@@ -111,18 +132,34 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden bg-[#09090B]">
-      {/* Background */}
+    <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden bg-[#09090B]">
+      {/* Cursor glow — base44 style */}
+      <motion.div
+        className="pointer-events-none absolute z-0"
+        style={{
+          left: glowX,
+          top: glowY,
+          x: '-50%',
+          y: '-50%',
+          width: '600px',
+          height: '600px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(45,212,191,0.13) 0%, rgba(8,145,178,0.07) 40%, transparent 70%)',
+          filter: 'blur(1px)',
+        }}
+      />
+
+      {/* Background hotel image */}
       <div className="absolute inset-0" style={{
         backgroundImage: 'url(https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1920&q=80)',
         backgroundSize: 'cover', backgroundPosition: 'center',
-        opacity: 0.12,
+        opacity: 0.10,
       }} />
       <div className="absolute inset-0 bg-gradient-to-r from-[#09090B] via-[#09090B]/95 to-[#09090B]/70" />
 
       {/* Subtle grid */}
       <div className="absolute inset-0" style={{
-        backgroundImage: 'linear-gradient(rgba(45,212,191,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(45,212,191,0.03) 1px, transparent 1px)',
+        backgroundImage: 'linear-gradient(rgba(45,212,191,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(45,212,191,0.025) 1px, transparent 1px)',
         backgroundSize: '60px 60px',
       }} />
 
