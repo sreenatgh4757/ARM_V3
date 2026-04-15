@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import ScrollToTop from './components/layout/ScrollToTop';
+import WhatsAppWidget from './components/WhatsAppWidget';
 import HomePage from './pages/HomePage';
 import VzirPage from './pages/VzirPage';
 import GigSearchPage from './pages/GigSearchPage';
@@ -60,11 +61,15 @@ function App() {
 
         <Footer />
 
+        {/* WhatsApp floating widget — bottom right */}
+        <WhatsAppWidget />
+
+        {/* Scroll to top — bottom left to avoid overlap */}
         <AnimatePresence>
           {showScrollTop && (
             <motion.button
               onClick={scrollToTop}
-              className="fixed bottom-8 right-8 z-50 w-12 h-12 rounded-full bg-[rgba(250,250,249,0.03)] border border-[rgba(250,250,249,0.06)] backdrop-blur-sm flex items-center justify-center hover:border-[rgba(45,212,191,0.3)] hover:bg-[rgba(45,212,191,0.05)] transition-all duration-300"
+              className="fixed bottom-8 left-8 z-50 w-12 h-12 rounded-full bg-[rgba(250,250,249,0.03)] border border-[rgba(250,250,249,0.06)] backdrop-blur-sm flex items-center justify-center hover:border-[rgba(45,212,191,0.3)] hover:bg-[rgba(45,212,191,0.05)] transition-all duration-300"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
