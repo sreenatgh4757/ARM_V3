@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
+from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
@@ -147,14 +148,14 @@ async def contact(form: ContactForm, background_tasks: BackgroundTasks):
 
 @app.get("/webhook")
 async def verify_webhook(request: Request):
-    """Meta webhook verification handshake"""
+    """Meta webhook verification handshake — must return challenge as plain text"""
     params = dict(request.query_params)
     mode = params.get("hub.mode")
     token = params.get("hub.verify_token")
     challenge = params.get("hub.challenge")
 
     if mode == "subscribe" and token == VERIFY_TOKEN:
-        return int(challenge)
+        return PlainTextResponse(content=challenge, status_code=200)
 
     raise HTTPException(status_code=403, detail="Webhook verification failed")
 
