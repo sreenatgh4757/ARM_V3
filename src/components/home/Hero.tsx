@@ -1,286 +1,190 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { animate } from 'animejs';
+import { ArrowRight } from 'lucide-react';
+import { useReveal, useStaggerReveal, prefersReducedMotion } from '../../lib/motion';
 
-const TAGLINES = [
-  'thinks for your hotel.',
-  'never misses an opportunity.',
-  'connects every system you have.',
-  'answers before you ask.',
+/* Illustrative only — mirrors VirgoAIChat's real questions so the claim
+   stays honest, but these are plain display, not links. */
+const QUESTIONS = [
+  'How many check-ins do we have today?',
+  'Should I raise rates this weekend?',
+  'Which rooms still need cleaning?',
+  'How are we tracking against last month?',
 ];
-
-type Phase = 'question' | 'typing' | 'answer';
-
-const chatItems = [
-  {
-    q: 'Should I raise rates this weekend?',
-    sources: ['Events', 'Competitors'],
-    a: 'Yes. A 15,000-person festival is 800m away Saturday. Your 3 nearest competitors are already sold out. Recommend +22% on Saturday — 6 rooms still open.',
-  },
-  {
-    q: 'Give me today\'s morning briefing.',
-    sources: ['PMS', 'Housekeeping', 'Revenue'],
-    a: '12 arrivals today, 3 VIPs. Rooms 205, 318 still dirty — priority before 2pm check-ins. Yesterday revenue: £4,240 (+12% vs same day last week). No alerts outstanding.',
-  },
-];
-
-function MiniChat() {
-  const [idx, setIdx] = useState(0);
-  const [phase, setPhase] = useState<Phase>('question');
-
-  useEffect(() => {
-    let t: ReturnType<typeof setTimeout>;
-    if (phase === 'question') t = setTimeout(() => setPhase('typing'), 1000);
-    else if (phase === 'typing') t = setTimeout(() => setPhase('answer'), 1600);
-    else t = setTimeout(() => { setIdx(i => (i + 1) % chatItems.length); setPhase('question'); }, 4500);
-    return () => clearTimeout(t);
-  }, [phase, idx]);
-
-  const c = chatItems[idx];
-
-  return (
-    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.5)' }}>
-      {/* Header */}
-      <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.02)' }}>
-        <div style={{ display: 'flex', gap: '5px' }}>
-          {['#FF5F57','#FEBC2E','#28C840'].map(c => <div key={c} style={{ width: '9px', height: '9px', borderRadius: '50%', background: c }} />)}
-        </div>
-        <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'rgba(45,212,191,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg width="11" height="11" viewBox="0 0 80 80" fill="none"><polyline points="10,10 40,70 70,10" stroke="#2DD4BF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </div>
-        <div>
-          <div style={{ fontFamily: 'Sora, sans-serif', fontSize: '11px', fontWeight: 600, color: '#FAFAFA' }}>Vzir</div>
-          <div style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '9px', color: '#22C55E' }}>● Live</div>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div style={{ padding: '16px', minHeight: '190px', display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'flex-end', background: '#09090B' }}>
-        <AnimatePresence mode="wait">
-          <motion.div key={`tag-${idx}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '8px', color: '#71717A' }}>Querying:</span>
-            {c.sources.map(s => <span key={s} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '8px', color: '#2DD4BF', background: 'rgba(45,212,191,0.07)', border: '1px solid rgba(45,212,191,0.18)', padding: '1px 6px', borderRadius: '3px' }}>{s}</span>)}
-          </motion.div>
-        </AnimatePresence>
-
-        <AnimatePresence mode="wait">
-          <motion.div key={`q-${idx}`} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} style={{ alignSelf: 'flex-end', maxWidth: '80%' }}>
-            <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px 12px 3px 12px', padding: '9px 13px' }}>
-              <p style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '12px', color: '#FAFAFA', margin: 0 }}>{c.q}</p>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-
-        <AnimatePresence mode="wait">
-          {phase === 'typing' && (
-            <motion.div key="t" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} style={{ alignSelf: 'flex-start', background: 'rgba(45,212,191,0.05)', border: '1px solid rgba(45,212,191,0.12)', borderRadius: '3px 12px 12px 12px', padding: '9px 13px', display: 'flex', gap: '4px' }}>
-              {[0,1,2].map(i => <motion.div key={i} style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#2DD4BF' }} animate={{ opacity: [0.3,1,0.3], y: [0,-3,0] }} transition={{ duration: 0.8, delay: i*0.15, repeat: Infinity }} />)}
-            </motion.div>
-          )}
-          {phase === 'answer' && (
-            <motion.div key={`a-${idx}`} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} style={{ alignSelf: 'flex-start', maxWidth: '92%' }}>
-              <div style={{ background: 'rgba(45,212,191,0.05)', border: '1px solid rgba(45,212,191,0.12)', borderRadius: '3px 12px 12px 12px', padding: '10px 14px' }}>
-                <p style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '12px', color: '#E2E8F0', margin: 0, lineHeight: 1.6 }}>{c.a}</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Input */}
-      <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(255,255,255,0.01)' }}>
-        <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '7px', padding: '7px 11px', color: '#71717A', fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '11px' }}>Ask your hotel anything…</div>
-        <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: '#14B8A6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#09090B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function Hero() {
-  const [tagIdx, setTagIdx] = useState(0);
-  const heroRef = useRef<HTMLElement>(null);
+  const badgeRef = useRef<HTMLSpanElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
 
-  // Cursor glow (base44-style)
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const glowX = useSpring(mouseX, { stiffness: 60, damping: 20 });
-  const glowY = useSpring(mouseY, { stiffness: 60, damping: 20 });
+  const headlineRef = useReveal<HTMLHeadingElement>({ y: 28, duration: 800, delay: 120 });
+  const subRef = useReveal<HTMLParagraphElement>({ y: 20, duration: 700, delay: 260 });
+  const ctaRef = useReveal<HTMLDivElement>({ y: 18, duration: 650, delay: 380 });
+  const askLabelRef = useReveal<HTMLParagraphElement>({ y: 14, duration: 600, delay: 500 });
+  const chipsRef = useStaggerReveal<HTMLDivElement>({ y: 16, duration: 500, delay: 560, staggerDelay: 60 });
+  const noteRef = useReveal<HTMLParagraphElement>({ y: 12, duration: 600, delay: 800 });
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    const rect = heroRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    mouseX.set(e.clientX - rect.left);
-    mouseY.set(e.clientY - rect.top);
-  }, [mouseX, mouseY]);
-
+  // Badge gets its own treatment: a bouncier entrance than the plain
+  // fade-up reveal, plus a soft ambient pulse to keep drawing the eye.
   useEffect(() => {
-    const el = heroRef.current;
-    if (!el) return;
-    el.addEventListener('mousemove', handleMouseMove);
-    return () => el.removeEventListener('mousemove', handleMouseMove);
-  }, [handleMouseMove]);
+    const badge = badgeRef.current;
+    const glow = glowRef.current;
+    if (!badge) return;
 
-  useEffect(() => {
-    const t = setInterval(() => setTagIdx(i => (i + 1) % TAGLINES.length), 2600);
-    return () => clearInterval(t);
+    if (prefersReducedMotion()) {
+      badge.style.opacity = '1';
+      return;
+    }
+
+    animate(badge, {
+      opacity: [0, 1],
+      scale: [0.7, 1.06, 1],
+      duration: 750,
+      ease: 'outElastic(1, 0.6)',
+    });
+
+    if (glow) {
+      animate(glow, {
+        opacity: [0, 0.55, 0.15],
+        scale: [0.9, 1.18, 1],
+        duration: 2600,
+        delay: 500,
+        loop: true,
+        ease: 'inOutSine',
+      });
+    }
   }, []);
 
-  const scrollToProducts = () => {
-    document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   return (
-    <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden bg-[#09090B]">
-      {/* Cursor glow — base44 style */}
-      <motion.div
-        className="pointer-events-none absolute z-0"
+    <section
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        background: 'var(--ground)',
+        padding: 'clamp(72px, 11vw, 132px) 0 clamp(56px, 7vw, 88px)',
+      }}
+    >
+      <div
+        aria-hidden
         style={{
-          left: glowX,
-          top: glowY,
-          x: '-50%',
-          y: '-50%',
-          width: '600px',
-          height: '600px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(45,212,191,0.13) 0%, rgba(8,145,178,0.07) 40%, transparent 70%)',
-          filter: 'blur(1px)',
+          position: 'absolute', top: '-18%', left: '50%', transform: 'translateX(-50%)',
+          width: 'min(1100px, 120vw)', height: '620px', pointerEvents: 'none',
+          background: 'radial-gradient(ellipse at center, rgba(124,58,237,0.16) 0%, rgba(200,240,75,0.07) 42%, transparent 70%)',
+          filter: 'blur(8px)',
         }}
       />
 
-      {/* Background hotel image */}
-      <div className="absolute inset-0" style={{
-        backgroundImage: 'url(https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1920&q=80)',
-        backgroundSize: 'cover', backgroundPosition: 'center',
-        opacity: 0.10,
-      }} />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#09090B] via-[#09090B]/95 to-[#09090B]/70" />
-
-      {/* Subtle grid */}
-      <div className="absolute inset-0" style={{
-        backgroundImage: 'linear-gradient(rgba(45,212,191,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(45,212,191,0.025) 1px, transparent 1px)',
-        backgroundSize: '60px 60px',
-      }} />
-
-      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-20 py-32">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
-
-          {/* Left — company copy */}
-          <div>
-            {/* Company badge */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}
-            >
-              <span style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '11px', color: '#71717A', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', padding: '5px 14px', borderRadius: '999px', letterSpacing: '1px' }}>
-                A.R.M Technologies · Bournemouth, UK
-              </span>
-              <span style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '11px', color: '#2DD4BF', background: 'rgba(45,212,191,0.07)', border: '1px solid rgba(45,212,191,0.2)', padding: '5px 14px', borderRadius: '999px' }}>
-                AI · Hospitality · SaaS
-              </span>
-            </motion.div>
-
-            {/* Headline */}
-            <motion.h1
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
-              style={{ fontFamily: 'Sora, sans-serif', fontWeight: 700, fontSize: 'clamp(36px, 5vw, 60px)', lineHeight: 1.08, color: '#FAFAFA', marginBottom: '16px' }}
-            >
-              We build software that{' '}
-              <span style={{ display: 'block', color: '#2DD4BF', minHeight: '1.15em', overflow: 'hidden' }}>
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={tagIdx}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.4 }}
-                    style={{ display: 'block' }}
-                  >
-                    {TAGLINES[tagIdx]}
-                  </motion.span>
-                </AnimatePresence>
-              </span>
-            </motion.h1>
-
-            {/* Description */}
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.25 }}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 'clamp(15px, 1.6vw, 18px)', color: '#A1A1AA', lineHeight: 1.75, maxWidth: '520px', marginBottom: '32px' }}
-            >
-              A.R.M Technologies is a UK software company building AI-powered products for the hospitality industry. Our flagship product, <strong style={{ color: '#FAFAFA', fontWeight: 500 }}>Vzir</strong>, connects every system your hotel uses and answers any question in plain English — instantly.
-            </motion.p>
-
-            {/* CTAs */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '40px' }}
-            >
-              <Link
-                to="/vzir"
-                style={{ fontFamily: 'Sora, sans-serif', fontWeight: 600, fontSize: '14px', color: '#09090B', background: '#14B8A6', padding: '14px 32px', borderRadius: '12px', textDecoration: 'none', display: 'inline-block', transition: 'all 0.2s', minHeight: '50px', lineHeight: '22px' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#0D9488'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#14B8A6'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
-              >
-                Explore Vzir →
-              </Link>
-              <button
-                onClick={scrollToProducts}
-                style={{ fontFamily: 'Sora, sans-serif', fontWeight: 600, fontSize: '14px', color: '#FAFAFA', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', padding: '14px 32px', borderRadius: '12px', cursor: 'pointer', transition: 'background 0.2s', minHeight: '50px' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-              >
-                What we build ↓
-              </button>
-            </motion.div>
-
-            {/* Stats row */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.7, delay: 0.6 }}
-              style={{ display: 'flex', gap: '28px', flexWrap: 'wrap', paddingTop: '28px', borderTop: '1px solid rgba(255,255,255,0.06)' }}
-            >
-              {[
-                { n: 'UK', l: 'Based in Bournemouth' },
-                { n: '£11B+', l: 'Market size' },
-                { n: '90-day', l: 'Free pilot' },
-                { n: '20 min', l: 'Setup time' },
-              ].map(stat => (
-                <div key={stat.l}>
-                  <div style={{ fontFamily: 'Sora, sans-serif', fontWeight: 700, fontSize: '20px', color: '#2DD4BF' }}>{stat.n}</div>
-                  <div style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '11px', color: '#71717A', marginTop: '2px' }}>{stat.l}</div>
-                </div>
-              ))}
-            </motion.div>
-          </div>
-
-          {/* Right — live Vzir chat */}
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+      <div className="relative max-w-[1000px] mx-auto px-6 text-center">
+        <div style={{ position: 'relative', display: 'inline-block', marginBottom: '32px' }}>
+          <div
+            ref={glowRef}
+            aria-hidden
+            style={{
+              position: 'absolute', inset: '-14px', borderRadius: 'var(--radius-pill)',
+              background: 'radial-gradient(ellipse, rgba(124,58,237,0.5) 0%, transparent 72%)',
+              filter: 'blur(14px)', opacity: 0, pointerEvents: 'none',
+            }}
+          />
+          <span
+            ref={badgeRef}
+            className="font-mono"
+            style={{
+              position: 'relative',
+              opacity: 0,
+              display: 'inline-flex', alignItems: 'center', gap: '12px',
+              fontSize: '14px', letterSpacing: '1.5px', textTransform: 'uppercase',
+              color: 'var(--ink)', background: 'var(--surface)',
+              border: '1px solid var(--line)', borderRadius: 'var(--radius-pill)',
+              padding: '11px 24px',
+            }}
           >
-            <div style={{ marginBottom: '14px', textAlign: 'right' }}>
-              <span style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '11px', color: '#71717A', fontStyle: 'italic' }}>
-                Vzir — live demo
-              </span>
-            </div>
-            <MiniChat />
-            <p style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '12px', color: '#71717A', textAlign: 'center', marginTop: '14px' }}>
-              Real questions. Real answers. Every system connected.
-            </p>
-          </motion.div>
-
+            A.R.M Technologies
+            <span style={{ width: '1px', height: '14px', background: 'var(--line)' }} />
+            <span style={{ color: 'var(--primary)', fontWeight: 700 }}>Introducing Virgo</span>
+          </span>
         </div>
+
+        <h1
+          ref={headlineRef}
+          className="font-display"
+          style={{
+            opacity: 0,
+            fontWeight: 800,
+            fontSize: 'clamp(44px, 8.4vw, 104px)',
+            lineHeight: 0.94,
+            color: 'var(--ink)',
+            marginBottom: '26px',
+          }}
+        >
+          Ask your hotel
+          <br />
+          anything.
+        </h1>
+
+        <p
+          ref={subRef}
+          className="font-body"
+          style={{
+            opacity: 0,
+            fontSize: 'clamp(16px, 1.7vw, 20px)',
+            lineHeight: 1.6,
+            color: 'var(--muted)',
+            maxWidth: '620px',
+            margin: '0 auto 34px',
+          }}
+        >
+          Virgo connects the systems your independent hotel already runs — PMS, accounting,
+          guest messaging — and answers in plain English. It never changes anything in them.
+        </p>
+
+        {/* The page's primary action. Everything else in the hero is context. */}
+        <div
+          ref={ctaRef}
+          style={{ opacity: 0, display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '48px' }}
+        >
+          <a href="#pilot" className="pill pill-primary">
+            Join the pilot <ArrowRight size={15} />
+          </a>
+          <a href="#virgo" className="pill pill-outline">
+            See it working
+          </a>
+        </div>
+
+        {/* Illustrative examples only — not interactive, nothing to click. */}
+        <p
+          ref={askLabelRef}
+          className="font-mono"
+          style={{ opacity: 0, fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--faint)', marginBottom: '16px' }}
+        >
+          For example
+        </p>
+
+        <div
+          ref={chipsRef}
+          style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', maxWidth: '760px', margin: '0 auto' }}
+        >
+          {QUESTIONS.map(q => (
+            <span
+              key={q}
+              className="font-body"
+              style={{
+                opacity: 0,
+                background: 'var(--surface)', border: '1px solid var(--line)',
+                borderRadius: 'var(--radius-pill)', padding: '12px 20px',
+                fontSize: '14.5px', color: 'var(--ink-soft)', fontWeight: 500,
+              }}
+            >
+              {q}
+            </span>
+          ))}
+        </div>
+
+        <p
+          ref={noteRef}
+          className="font-body"
+          style={{ opacity: 0, marginTop: '30px', fontSize: '13px', color: 'var(--faint)' }}
+        >
+          Read-only access · 20-minute setup · No IT team required
+        </p>
       </div>
     </section>
   );

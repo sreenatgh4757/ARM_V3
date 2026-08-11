@@ -1,15 +1,45 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { animate, stagger } from 'animejs';
 import { Menu, X } from 'lucide-react';
+import { useMountAnimation, prefersReducedMotion } from '../../lib/motion';
+
+const navLinks = [
+  { name: 'Virgo', path: '/#virgo' },
+  { name: 'How it works', path: '/#how-it-works' },
+  { name: 'Company', path: '/company' },
+];
+
+function Wordmark({ onClick }: { onClick?: () => void }) {
+  return (
+    <Link
+      to="/"
+      onClick={onClick}
+      className="flex flex-col leading-none hover:opacity-70 transition-opacity"
+      style={{ textDecoration: 'none' }}
+    >
+      <span className="font-display" style={{ fontWeight: 800, fontSize: '19px', color: 'var(--ink)' }}>
+        A.R.M
+      </span>
+      <span
+        className="font-mono"
+        style={{ fontSize: '9px', color: 'var(--faint)', letterSpacing: '2.4px', textTransform: 'uppercase', marginTop: '3px' }}
+      >
+        Technologies
+      </span>
+    </Link>
+  );
+}
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const mobileLinksRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
+    const handleScroll = () => setScrolled(window.scrollY > 40);
+    handleScroll();
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -19,257 +49,123 @@ export default function Navbar() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [mobileMenuOpen]);
 
-  const scrollToContact = () => {
-    setMobileMenuOpen(false);
-    setTimeout(() => {
-      const contact = document.getElementById('contact');
-      if (contact) contact.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
+  const { ref: mobileOverlayRef, shouldRender: showMobileOverlay } =
+    useMountAnimation<HTMLDivElement>(mobileMenuOpen, { duration: 240 });
 
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Vzir', path: '/vzir' },
-    { name: 'The Gig Search', path: '/thegigsearch' },
-    { name: 'Consulting', path: '/consulting' },
-  ];
+  useEffect(() => {
+    if (!mobileMenuOpen || !mobileLinksRef.current) return;
+    const children = Array.from(mobileLinksRef.current.children) as HTMLElement[];
+    animate(children, {
+      opacity: [0, 1],
+      translateY: [16, 0],
+      duration: prefersReducedMotion() ? 1 : 380,
+      delay: prefersReducedMotion() ? 0 : stagger(60),
+    });
+  }, [mobileMenuOpen]);
 
   return (
     <>
-      <motion.nav
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-        style={scrolled ? {
-          background: 'rgba(9,9,11,0.9)',
-          backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(255,255,255,0.05)'
-        } : {}}
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6 }}
+      <nav
+        className="sticky top-0 z-50"
+        style={{
+          background: scrolled ? 'rgba(244,242,251,0.86)' : 'var(--ground)',
+          backdropFilter: scrolled ? 'blur(14px)' : 'none',
+          borderBottom: scrolled ? '1px solid var(--line-soft)' : '1px solid transparent',
+          transition: 'background 0.25s ease, border-color 0.25s ease',
+        }}
       >
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-20 py-5 flex items-center justify-between">
+        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 py-4 flex items-center justify-between gap-6">
+          <Wordmark />
 
-          {/* 🔥 LOGO UPDATED */}
-          <Link
-            to="/"
-            className="flex flex-col leading-none hover:opacity-80 transition-opacity"
-            style={{ textDecoration: 'none' }}
-          >
-            <span
-              style={{
-                fontFamily: 'Sora, sans-serif',
-                fontWeight: 700,
-                fontSize: '18px',
-                color: '#FAFAFA'
-              }}
-            >
-              A.R.M
-            </span>
-
-            <span
-              style={{
-                fontFamily: 'Plus Jakarta Sans, sans-serif',
-                fontSize: '10px',
-                color: '#71717A',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                marginTop: '2px'
-              }}
-            >
-              Technologies
-            </span>
-          </Link>
-
-          {/* Desktop Menu */}
-          <div className="hidden lg:flex items-center gap-10">
-            {navLinks.map((link) => (
+          <div className="hidden lg:flex items-center gap-9">
+            {navLinks.map(link => (
               <Link
                 key={link.path}
                 to={link.path}
+                className="font-body"
                 style={{
-                  fontFamily: 'Plus Jakarta Sans, sans-serif',
-                  fontWeight: 400,
-                  fontSize: '14px',
-                  color: location.pathname === link.path ? '#2DD4BF' : '#A1A1AA',
+                  fontSize: '14.5px',
+                  fontWeight: 500,
+                  color: location.pathname === link.path ? 'var(--primary)' : 'var(--ink-soft)',
                   textDecoration: 'none',
                   transition: 'color 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--primary)'; }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.color = location.pathname === link.path ? 'var(--primary)' : 'var(--ink-soft)';
                 }}
               >
                 {link.name}
               </Link>
             ))}
-
-            <button
-              onClick={scrollToContact}
-              style={{
-                fontFamily: 'Plus Jakarta Sans, sans-serif',
-                fontWeight: 400,
-                fontSize: '14px',
-                color: '#A1A1AA',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'color 0.2s',
-              }}
-            >
-              Contact
-            </button>
           </div>
 
-          {/* CTA */}
           <div className="hidden lg:block">
-            <button
-              onClick={scrollToContact}
-              style={{
-                fontFamily: 'Plus Jakarta Sans, sans-serif',
-                fontWeight: 400,
-                fontSize: '14px',
-                color: '#2DD4BF',
-                border: '1px solid rgba(45,212,191,0.3)',
-                padding: '8px 24px',
-                borderRadius: '9999px',
-                background: 'transparent',
-                cursor: 'pointer',
-                transition: 'background 0.2s',
-              }}
-            >
+            <Link to="/#pilot" className="pill pill-ink" style={{ padding: '11px 24px', minHeight: '44px', fontSize: '14.5px' }}>
               Get in touch
-            </button>
+            </Link>
           </div>
 
-          {/* Mobile Button */}
           <button
-            className="lg:hidden text-[#FAFAFA] w-11 h-11 flex items-center justify-center"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
+            className="lg:hidden w-11 h-11 flex items-center justify-center"
+            style={{ color: 'var(--ink)', background: 'transparent', border: 'none' }}
+            onClick={() => setMobileMenuOpen(o => !o)}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
-      </motion.nav>
+      </nav>
 
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            className="fixed inset-0 z-40 lg:hidden flex flex-col"
-            style={{ background: '#09090B' }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="flex items-center justify-between px-6 py-5 border-b border-[rgba(255,255,255,0.05)]">
+      {showMobileOverlay && (
+        <div
+          ref={mobileOverlayRef}
+          className="fixed inset-0 z-[60] lg:hidden flex flex-col"
+          style={{ background: 'var(--ground)' }}
+        >
+          <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid var(--line-soft)' }}>
+            <Wordmark onClick={() => setMobileMenuOpen(false)} />
+            <button
+              className="w-11 h-11 flex items-center justify-center"
+              style={{ color: 'var(--ink)', background: 'transparent', border: 'none' }}
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              <X size={24} />
+            </button>
+          </div>
 
-              {/* 🔥 LOGO ALSO UPDATED HERE */}
-              <Link
-                to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex flex-col leading-none"
-                style={{ textDecoration: 'none' }}
-              >
-                <span style={{
-                  fontFamily: 'Sora, sans-serif',
-                  fontWeight: 700,
-                  fontSize: '18px',
-                  color: '#FAFAFA'
-                }}>
-                  A.R.M
-                </span>
-
-                <span style={{
-                  fontFamily: 'Plus Jakarta Sans, sans-serif',
-                  fontSize: '10px',
-                  color: '#71717A',
-                  letterSpacing: '2px',
-                  textTransform: 'uppercase',
-                  marginTop: '2px'
-                }}>
-                  Technologies
-                </span>
-              </Link>
-
-              <button
-                className="w-11 h-11 flex items-center justify-center text-[#FAFAFA]"
-                onClick={() => setMobileMenuOpen(false)}
-                aria-label="Close menu"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="flex flex-col items-center justify-center flex-1 gap-8 px-6">
-              {navLinks.map((link, i) => (
-                <motion.div
-                  key={link.path}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06 }}
+          <div ref={mobileLinksRef} className="flex flex-col items-center justify-center flex-1 gap-7 px-6">
+            {navLinks.map(link => (
+              <div key={link.path} style={{ opacity: 0 }}>
+                <Link
+                  to={link.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="font-display"
+                  style={{
+                    fontWeight: 700,
+                    fontSize: '28px',
+                    color: location.pathname === link.path ? 'var(--primary)' : 'var(--ink)',
+                    textDecoration: 'none',
+                  }}
                 >
-                  <Link
-                    to={link.path}
-                    style={{
-                      fontFamily: 'Sora, sans-serif',
-                      fontWeight: 600,
-                      fontSize: '24px',
-                      color: location.pathname === link.path ? '#2DD4BF' : '#FAFAFA',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    {link.name}
-                  </Link>
-                </motion.div>
-              ))}
-
-              <motion.button
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: navLinks.length * 0.06 }}
-                onClick={scrollToContact}
-                style={{
-                  fontFamily: 'Sora, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '24px',
-                  color: '#FAFAFA',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                Contact
-              </motion.button>
-
-              <motion.button
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: (navLinks.length + 1) * 0.06 }}
-                onClick={scrollToContact}
-                style={{
-                  marginTop: '16px',
-                  fontFamily: 'Plus Jakarta Sans, sans-serif',
-                  fontWeight: 400,
-                  fontSize: '16px',
-                  color: '#2DD4BF',
-                  border: '1px solid rgba(45,212,191,0.3)',
-                  padding: '12px 32px',
-                  borderRadius: '9999px',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                }}
-              >
+                  {link.name}
+                </Link>
+              </div>
+            ))}
+            <div style={{ opacity: 0, marginTop: '10px' }}>
+              <Link to="/#pilot" onClick={() => setMobileMenuOpen(false)} className="pill pill-ink">
                 Get in touch
-              </motion.button>
+              </Link>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
     </>
   );
 }

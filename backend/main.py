@@ -42,10 +42,10 @@ SYSTEM_PROMPT = """You are the AI assistant for ARM Technologies, a UK-based sof
 
 ## Our Products
 
-### Vzir (Flagship — In Development, Pilot Open)
+### Virgo (Flagship — In Development, Pilot Open)
 AI Hotel Intelligence Platform for independent hotel managers.
 - Connects PMS (Cloudbeds), Xero accounting, WhatsApp, OTAs (Booking.com), events APIs, flights, weather, competitor rates
-- Hotel manager asks any question in plain English → Vzir queries all systems simultaneously → one clear answer
+- Hotel manager asks any question in plain English → Virgo queries all systems simultaneously → one clear answer
 - Read-only access — never writes to hotel systems, data stays safe
 - 20-minute setup, no IT team required
 - Saves 1–4 hours every morning
@@ -60,7 +60,7 @@ Connecting skilled hospitality workers with the right roles, faster than general
 Strategic advisory for early-stage startups — revenue models, operations, growth strategy.
 
 ## Pilot Application
-If anyone is interested in Vzir pilot: encourage them to email info@armtechnologies.ltd with subject "Vzir Pilot" or visit armtechnologies.ltd
+If anyone is interested in Virgo pilot: encourage them to email info@armtechnologies.ltd with subject "Virgo Pilot" or visit armtechnologies.ltd
 
 ## Your Tone
 - Friendly, concise, conversational — this is WhatsApp not email
@@ -117,7 +117,7 @@ async def get_ai_reply(user_message: str, from_number: str) -> str:
 class ContactForm(BaseModel):
     name: str
     phone: str
-    interest: str = "Vzir"
+    interest: str = "Virgo"
 
 
 @app.post("/contact")

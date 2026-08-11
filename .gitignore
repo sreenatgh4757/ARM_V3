@@ -21,3 +21,6 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Claude Code local settings (personal permissions, absolute paths)
+.claude/settings.local.json
