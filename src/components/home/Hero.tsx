@@ -3,7 +3,7 @@ import { animate } from 'animejs';
 import { ArrowRight } from 'lucide-react';
 import { useReveal, useStaggerReveal, prefersReducedMotion } from '../../lib/motion';
 
-/* Illustrative only — mirrors VirgoAIChat's real questions so the claim
+/* Illustrative only — mirrors VirgoShowcase's real questions so the claim
    stays honest, but these are plain display, not links. */
 const QUESTIONS = [
   'How many check-ins do we have today?',
