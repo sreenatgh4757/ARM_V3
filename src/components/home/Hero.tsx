@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { animate } from 'animejs';
+import { animate, stagger } from 'animejs';
 import { ArrowRight } from 'lucide-react';
 import { useReveal, useStaggerReveal, prefersReducedMotion } from '../../lib/motion';
 
@@ -12,9 +12,15 @@ const QUESTIONS = [
   'How are we tracking against last month?',
 ];
 
+const MEET_VIRGO_WORDS = [
+  { text: 'Meet', color: 'var(--ink)' },
+  { text: 'Virgo', color: 'var(--primary)' },
+];
+
 export default function Hero() {
   const badgeRef = useRef<HTMLSpanElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
+  const meetVirgoRef = useRef<HTMLDivElement>(null);
 
   const headlineRef = useReveal<HTMLHeadingElement>({ y: 28, duration: 800, delay: 120 });
   const subRef = useReveal<HTMLParagraphElement>({ y: 20, duration: 700, delay: 260 });
@@ -52,6 +58,31 @@ export default function Hero() {
         ease: 'inOutSine',
       });
     }
+  }, []);
+
+  // "Meet Virgo" gets its own kinetic-type entrance — letters tumble in
+  // with a stagger, distinct from the badge's bouncy pop and the headline's
+  // plain fade-up, so it reads as the page's second beat, not a rerun.
+  useEffect(() => {
+    const el = meetVirgoRef.current;
+    if (!el) return;
+    const letters = Array.from(el.querySelectorAll<HTMLElement>('[data-letter]'));
+    if (!letters.length) return;
+
+    if (prefersReducedMotion()) {
+      letters.forEach(l => { l.style.opacity = '1'; });
+      return;
+    }
+
+    animate(letters, {
+      opacity: [0, 1],
+      translateY: [38, 0],
+      scale: [0.4, 1],
+      rotate: () => `${Math.random() * 16 - 8}deg`,
+      duration: 850,
+      delay: stagger(35, { start: 550 }),
+      ease: 'outExpo',
+    });
   }, []);
 
   return (
@@ -98,9 +129,34 @@ export default function Hero() {
             }}
           >
             A.R.M Technologies
-            <span style={{ width: '1px', height: '14px', background: 'var(--line)' }} />
-            <span style={{ color: 'var(--primary)', fontWeight: 700 }}>Introducing Virgo</span>
           </span>
+        </div>
+
+        {/* Kinetic-type entrance, distinct from the badge and headline reveals below. */}
+        <div
+          ref={meetVirgoRef}
+          className="font-display"
+          aria-label="Meet Virgo"
+          style={{
+            display: 'flex', flexWrap: 'wrap', justifyContent: 'center',
+            gap: '0 0.32em', marginBottom: '20px',
+            fontWeight: 800, fontSize: 'clamp(34px, 5.6vw, 60px)',
+            lineHeight: 1, letterSpacing: '-0.01em',
+          }}
+        >
+          {MEET_VIRGO_WORDS.map(({ text, color }) => (
+            <span key={text} style={{ display: 'inline-flex' }}>
+              {text.split('').map((ch, i) => (
+                <span
+                  key={`${text}-${i}`}
+                  data-letter
+                  style={{ display: 'inline-block', opacity: 0, color }}
+                >
+                  {ch}
+                </span>
+              ))}
+            </span>
+          ))}
         </div>
 
         <h1
