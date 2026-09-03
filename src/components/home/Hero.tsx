@@ -31,7 +31,7 @@ export default function Hero() {
   const eyebrowRef = useReveal<HTMLParagraphElement>({ y: 14, duration: 600, delay: 0 });
   const headlineRef = useReveal<HTMLHeadingElement>({ y: 28, duration: 800, delay: 120 });
   const subRef = useReveal<HTMLParagraphElement>({ y: 20, duration: 700, delay: 260 });
-  const ctaRef = useReveal<HTMLDivElement>({ y: 18, duration: 650, delay: 380 });
+  const ctaRef = useReveal<HTMLAnchorElement>({ y: 18, duration: 650, delay: 380 });
 
   return (
     <section
@@ -89,12 +89,24 @@ export default function Hero() {
               opacity: 0,
               fontWeight: 800,
               fontSize: 'clamp(42px, 5.6vw, 80px)',
-              lineHeight: 0.98,
+              lineHeight: 1.14,
               color: 'var(--ink)',
               marginBottom: '22px',
             }}
           >
-            Run every system with one question.
+            Run every system with one question.{' '}
+            {/* Rides the whitespace left by the headline's last line instead
+                of sitting below it — same idea as the pill in the eyebrow,
+                just scaled up. `useReveal` is attached here directly rather
+                than to a wrapping div so it can stay an inline flex item. */}
+            <a
+              ref={ctaRef}
+              href="#pilot"
+              className="pill pill-glass hero-inline-cta"
+              style={{ opacity: 0, verticalAlign: 'middle', margin: '6px 0 0 4px' }}
+            >
+              Book a demo <ArrowRight size={15} />
+            </a>
           </h1>
 
           <p
@@ -113,18 +125,6 @@ export default function Hero() {
             <Tag>Inspections</Tag> and <Tag>Maintenance</Tag>, then answers anything instantly
             and flags what needs a person.
           </p>
-
-          {/* One action, not two — a single, unambiguous next step. Placeholder
-              target: scrolls to the existing pilot form at #pilot until a real
-              booking link (Calendly or similar) is supplied to swap in here. */}
-          <div
-            ref={ctaRef}
-            style={{ opacity: 0, display: 'flex', gap: '12px', flexWrap: 'wrap' }}
-          >
-            <a href="#pilot" className="pill pill-glass">
-              Book a demo <ArrowRight size={15} />
-            </a>
-          </div>
         </div>
 
         {/* The product doing the thing the headline promises: a question types
