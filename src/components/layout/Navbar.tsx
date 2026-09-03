@@ -104,7 +104,24 @@ export default function Navbar() {
             ))}
           </div>
 
-          <div className="hidden lg:block">
+          <div className="hidden lg:flex items-center gap-6">
+            {/* A quieter secondary link, not a pill — it shouldn't compete
+                with "Get in touch" for attention. Goes straight to the same
+                inbox with a pre-filled subject, same pattern Medflow Dynamics
+                uses (their own /investors page has no separate form either,
+                just more context before the same two contact channels) —
+                Virgo has no traction/funding material to honestly fill a
+                dedicated investor page with yet, so a direct channel is the
+                honest version of that pattern. */}
+            <a
+              href="mailto:info@armtechnologies.ltd?subject=Investor%20Enquiry"
+              className="font-body"
+              style={{ fontSize: '13px', fontWeight: 500, color: 'var(--faint)', textDecoration: 'none', transition: 'color 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--faint)'; }}
+            >
+              Investor Enquiry
+            </a>
             <Link to="/#pilot" className="pill pill-ink" style={{ padding: '11px 24px', minHeight: '44px', fontSize: '14.5px' }}>
               Get in touch
             </Link>
@@ -162,6 +179,15 @@ export default function Navbar() {
               <Link to="/#pilot" onClick={() => setMobileMenuOpen(false)} className="pill pill-ink">
                 Get in touch
               </Link>
+            </div>
+            <div style={{ opacity: 0 }}>
+              <a
+                href="mailto:info@armtechnologies.ltd?subject=Investor%20Enquiry"
+                className="font-body"
+                style={{ fontSize: '15px', color: 'var(--faint)', textDecoration: 'none' }}
+              >
+                Investor Enquiry
+              </a>
             </div>
           </div>
         </div>

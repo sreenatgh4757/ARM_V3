@@ -51,13 +51,18 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(options: Revea
     const el = ref.current;
     if (!el) return;
     const { y = 24, duration = 700, delay = 0, ease = 'outQuad', opacity = 1 } = optsRef.current;
-    const reveal = () => animate(el, {
-      opacity: [0, opacity],
-      translateY: [y, 0],
-      duration: motionDuration(duration),
-      delay: motionDelay(delay),
-      ease,
-    });
+    // eslint-disable-next-line prefer-const -- assigned after `reveal` closes over it
+    let fallback: ReturnType<typeof setTimeout> | undefined;
+    const reveal = () => {
+      if (fallback) clearTimeout(fallback);
+      animate(el, {
+        opacity: [0, opacity],
+        translateY: [y, 0],
+        duration: motionDuration(duration),
+        delay: motionDelay(delay),
+        ease,
+      });
+    };
 
     // Above-the-fold content shouldn't depend on observer scheduling at all.
     if (isInViewport(el)) {
@@ -74,7 +79,19 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(options: Revea
       { threshold: 0.1, rootMargin: '0px 0px -8% 0px' }
     );
     observer.observe(el);
-    return () => observer.disconnect();
+
+    // Safety net — reproduced live: landing directly on a deep link (a
+    // fresh page load already scrolled to a hash) left one of these stuck
+    // at opacity: 0 forever, while an identical sibling hook a few hundred
+    // pixels away revealed normally. Whatever the exact trigger an observer
+    // can miss, content that appears a little late beats content that never
+    // appears at all — this guarantees the latter can't happen.
+    fallback = setTimeout(() => { reveal(); observer.disconnect(); }, 2500);
+
+    return () => {
+      observer.disconnect();
+      if (fallback) clearTimeout(fallback);
+    };
   }, []);
 
   return ref;
@@ -95,7 +112,10 @@ export function useStaggerReveal<T extends HTMLElement = HTMLDivElement>(options
     const el = ref.current;
     if (!el) return;
     const { y = 24, duration = 600, ease = 'outQuad', staggerDelay = 80, opacity = 1 } = optsRef.current;
+    // eslint-disable-next-line prefer-const -- assigned after `reveal` closes over it
+    let fallback: ReturnType<typeof setTimeout> | undefined;
     const reveal = () => {
+      if (fallback) clearTimeout(fallback);
       const children = Array.from(el.children) as HTMLElement[];
       if (children.length) {
         animate(children, {
@@ -122,10 +142,71 @@ export function useStaggerReveal<T extends HTMLElement = HTMLDivElement>(options
       { threshold: 0.1, rootMargin: '0px 0px -8% 0px' }
     );
     observer.observe(el);
-    return () => observer.disconnect();
+
+    // Same safety net as useReveal — see the comment there.
+    fallback = setTimeout(() => { reveal(); observer.disconnect(); }, 2500);
+
+    return () => {
+      observer.disconnect();
+      if (fallback) clearTimeout(fallback);
+    };
   }, []);
 
   return ref;
+}
+
+/**
+ * Reports which of `count` steps a tall scroll container is currently passing
+ * through, for sections that pin and advance a list as you scroll.
+ *
+ * useScrollScrub is the wrong tool for this: it seeks a continuous animation to
+ * a 0→1 progress value, and can't hand back a discrete index. This computes the
+ * index from how far the container's top has travelled past the viewport top.
+ *
+ * `enabled` lets the caller switch pinning off — the callers drop to a plain
+ * stacked list below the `lg` breakpoint and under reduced motion, where
+ * scroll-driven state changes are hostile rather than helpful.
+ */
+export function useScrollIndex(
+  ref: { current: HTMLElement | null },
+  count: number,
+  enabled = true
+) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !enabled || count <= 0) return;
+
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const rect = el.getBoundingClientRect();
+      // Scrollable distance is the container's height minus the one viewport
+      // the sticky child occupies while pinned.
+      const travel = rect.height - window.innerHeight;
+      if (travel <= 0) return;
+      const progress = Math.min(Math.max(-rect.top / travel, 0), 1);
+      // Clamp to count-1 so the final step holds while the container releases.
+      setIndex(Math.min(Math.floor(progress * count), count - 1));
+    };
+
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [ref, count, enabled]);
+
+  return index;
 }
 
 /**

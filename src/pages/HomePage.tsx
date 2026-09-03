@@ -1,41 +1,39 @@
 import Hero from '../components/home/Hero';
-import VirgoShowcase from '../components/home/VirgoShowcase';
-import DashboardShot from '../components/home/DashboardShot';
-import ConnectsStrip from '../components/home/ConnectsStrip';
 import BeforeAfter from '../components/home/BeforeAfter';
-import BentoFeatures from '../components/home/BentoFeatures';
-import ArmBand from '../components/home/ArmBand';
+import CapabilityScroller from '../components/home/CapabilityScroller';
 import VirgoProblem from '../components/virgo/VirgoProblem';
 import VirgoHowItWorks from '../components/virgo/VirgoHowItWorks';
 import VirgoPilotCTA from '../components/virgo/VirgoPilotCTA';
+import ScrollColorWash from '../components/home/ScrollColorWash';
 
 export default function HomePage() {
   return (
     <>
+      {/* Renders nothing — drives the --wash token as you scroll, so the
+          ground colour drifts between sections. Homepage only; the other
+          routes keep the static porcelain. */}
+      <ScrollColorWash />
+
       <Hero />
 
       {/* Say what's wrong before selling the fix — everything below is the
           answer to this section. */}
       <VirgoProblem />
 
-      {/* The statement moment: the name at wordmark scale over a preview of the
-          product itself — the morning report, then questions asked and
-          answered. It carries the #virgo anchor the nav links to. */}
-      <VirgoShowcase />
-
-      {/* What it plugs into, then the same product as a full dashboard. */}
-      <ConnectsStrip />
-      <DashboardShot />
-
-      {/* Then the change to a working morning, then the feature detail. */}
+      {/* The transformation, shown before it's explained — a working day
+          collapsing from five apps to one question. */}
       <BeforeAfter />
-      <div id="data-sources">
-        <BentoFeatures />
+
+      {/* What you can ask, capability by capability — housekeeping, guest
+          messaging and the rest live here as example questions, not separate
+          dashboards. The single surviving product visual besides the hero's
+          own ask-demo, so it also carries the #virgo nav anchor. */}
+      <div id="virgo">
+        <CapabilityScroller />
       </div>
 
-      {/* How to start, who built it, then the ask. */}
+      {/* How to start, then the ask. Who built it lives on /company. */}
       <VirgoHowItWorks />
-      <ArmBand />
       <div id="pilot">
         <VirgoPilotCTA />
       </div>

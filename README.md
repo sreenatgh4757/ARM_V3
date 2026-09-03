@@ -40,8 +40,69 @@ VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-Both are optional for local work. Without them the app falls back to placeholder
-values and runs fine, but the Virgo pilot signup form won't save anything.
+Without them the app still runs, but the pilot signup form cannot save anything —
+it fails fast and tells the visitor to email instead. `src/lib/supabase.ts` logs a
+console error naming the missing variables, so a misconfigured deploy is visible
+rather than silently dropping every signup.
+
+Set the same two variables in the hosting provider's environment settings.
+
+## Enquiry notifications
+
+A signup that only lands in a database table is a signup nobody reads. A Supabase
+database webhook fires the `notify-whatsapp` edge function on every insert into
+`vzir_pilot_signups`, which sends the enquiry to A.R.M's WhatsApp number.
+
+The form itself is not involved: it inserts a row and finishes. Nothing about
+notification can cost you a signup — if the WhatsApp send fails, the row is
+already committed and the enquiry is still in the table.
+
+The Meta access token can send messages as A.R.M, so it never goes near the React
+bundle — anything shipped to the browser is readable by every visitor. It lives in
+edge function secrets, which is the whole reason this runs server-side.
+
+**1. Deploy the function**
+
+```bash
+supabase functions deploy notify-whatsapp
+```
+
+**2. Set its secrets** (Supabase dashboard → Edge Functions → Secrets)
+
+| Secret | What it is |
+|---|---|
+| `WHATSAPP_TOKEN` | Meta access token |
+| `PHONE_NUMBER_ID` | Meta phone number ID (the sending number) |
+| `WHATSAPP_NOTIFY_NUMBER` | Where alerts go — A.R.M's number, not the visitor's |
+| `ENQUIRY_WEBHOOK_SECRET` | Any long random string you invent |
+| `WHATSAPP_TEMPLATE_NAME` | Optional, but see the 24-hour note below |
+| `WHATSAPP_TEMPLATE_LANG` | Optional, defaults to `en` |
+
+The first three are the same values the WhatsApp bot already uses.
+
+**3. Create the webhook** (Supabase dashboard → Database → Webhooks)
+
+Table `vzir_pilot_signups`, event `INSERT`, type "Supabase Edge Functions",
+pointing at `notify-whatsapp`. Add one HTTP header:
+
+```
+x-webhook-secret: <the ENQUIRY_WEBHOOK_SECRET value>
+```
+
+This is configured in the dashboard rather than as a migration on purpose — a
+migration is tracked in git, and both the secret and the project URL would end up
+committed.
+
+Without that header the function returns 401. Its URL is otherwise a public
+"send a WhatsApp as A.R.M" button.
+
+**The 24-hour window.** Meta only delivers a plain text message inside a 24-hour
+window that opens when the receiving number last messaged your business number.
+For an alert arriving at 3pm on a quiet Tuesday that window is usually shut, and
+the send fails with error `131047`. Plain text is therefore fine for testing but
+not for running on. Get a simple one-parameter template approved in Meta Business
+Manager and set `WHATSAPP_TEMPLATE_NAME` — templates have no window and always
+deliver.
 
 ## Structure
 
@@ -58,7 +119,9 @@ src/
     virgo/               Virgo-specific sections (problem, how it works, pilot form)
     layout/              Navbar, Footer, ScrollToTop
   pages/                 HomePage, CompanyPage, GigSearchPage, ConsultingPage
-supabase/migrations/     SQL for the pilot signup table
+supabase/
+  migrations/            SQL for the pilot signup table
+  functions/             Edge functions (notify-whatsapp: enquiry → WhatsApp)
 docs/                    Copy audits and content planning
 ```
 

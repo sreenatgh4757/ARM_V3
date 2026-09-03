@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseConfigured } from '../../lib/supabase';
 import { useStaggerReveal, useReveal } from '../../lib/motion';
+import FluidBackdrop from '../home/FluidBackdrop';
 
 function isValidEmail(email: string): boolean {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -41,6 +42,13 @@ export default function VirgoPilotCTA() {
       return;
     }
 
+    // No credentials means the insert can only fail on a DNS lookup for the
+    // placeholder host — skip the round trip and the spinner that goes with it.
+    if (!supabaseConfigured) {
+      setStatus('error');
+      return;
+    }
+
     setStatus('loading');
 
     // Table name predates the Virgo rename — left as-is to keep existing rows.
@@ -60,41 +68,34 @@ export default function VirgoPilotCTA() {
   };
 
   return (
-    <section
-      style={{
-        position: 'relative',
-        overflow: 'hidden',
-        background: 'var(--ground)',
-        borderTop: '1px solid var(--line-soft)',
-        padding: 'clamp(70px, 9vw, 120px) 0',
-      }}
-    >
-      <div
-        aria-hidden
+    /* The site's one dark band. The fluid sim lives here rather than behind
+       the hero: it's interactive, so it rewards a visitor who has already
+       scrolled the whole page, and a single contained band keeps the light
+       "porcelain" identity intact everywhere else. */
+    <FluidBackdrop className="fluid-cta">
+      <section
         style={{
-          position: 'absolute', bottom: '-40%', left: '50%', transform: 'translateX(-50%)',
-          width: 'min(900px, 120vw)', height: '700px', pointerEvents: 'none',
-          background: 'radial-gradient(ellipse at center, rgba(124,58,237,0.14) 0%, transparent 68%)',
+          position: 'relative',
+          padding: 'clamp(70px, 9vw, 120px) 0',
         }}
-      />
-
+      >
       <div className="relative max-w-[1180px] mx-auto px-6 lg:px-10">
         <div ref={headerRef} style={{ textAlign: 'center', marginBottom: '44px' }}>
           <p
             className="font-mono"
-            style={{ opacity: 0, fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--primary)', marginBottom: '16px' }}
+            style={{ opacity: 0, fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--pop)', marginBottom: '16px' }}
           >
             Get in touch
           </p>
           <h2
             className="font-display"
-            style={{ opacity: 0, fontWeight: 800, fontSize: 'clamp(28px, 4.2vw, 50px)', color: 'var(--ink)', lineHeight: 1.05, marginBottom: '16px' }}
+            style={{ opacity: 0, fontWeight: 800, fontSize: 'clamp(28px, 4.2vw, 50px)', color: '#fff', lineHeight: 1.05, marginBottom: '16px' }}
           >
-            Talk to the team building it.
+            Let's talk.
           </h2>
           <p
             className="font-body"
-            style={{ opacity: 0, fontSize: 'clamp(15px, 1.6vw, 17px)', color: 'var(--muted)', maxWidth: '460px', margin: '0 auto', lineHeight: 1.65 }}
+            style={{ opacity: 0, fontSize: 'clamp(15px, 1.6vw, 17px)', color: 'rgba(255,255,255,0.74)', maxWidth: '460px', margin: '0 auto', lineHeight: 1.65 }}
           >
             Send a note and we'll come back within one working day — no sales pipeline,
             no follow-up sequence.
@@ -205,9 +206,17 @@ export default function VirgoPilotCTA() {
                 {status === 'loading' ? 'Sending…' : 'Get in touch'}
               </button>
 
+              {/* A failed submit used to be a dead end ("please try again" on a
+                  form that will fail again for the same reason). Handing over
+                  the address keeps the lead — the person came here to make
+                  contact, so the fallback has to be another way to do that. */}
               {status === 'error' && (
-                <p style={{ fontSize: '12.5px', color: '#DC2626', textAlign: 'center' }}>
-                  Something went wrong. Please try again.
+                <p style={{ fontSize: '12.5px', color: '#DC2626', textAlign: 'center', lineHeight: 1.5 }}>
+                  We couldn't send that just now. Please email us at{' '}
+                  <a href="mailto:info@armtechnologies.ltd" style={{ color: '#DC2626', fontWeight: 600 }}>
+                    info@armtechnologies.ltd
+                  </a>{' '}
+                  instead — we'll pick it up either way.
                 </p>
               )}
             </form>
@@ -222,8 +231,27 @@ export default function VirgoPilotCTA() {
               info@armtechnologies.ltd
             </a>
           </div>
+
+          {/* Same channel now also reachable from the navbar ("Investor
+              Enquiry"), so this is a quiet echo for anyone who scrolled the
+              whole way down rather than the only way to find it. "Press"
+              dropped — no press interest to route yet, and naming a channel
+              nobody uses reads worse than not having it. */}
+          <div style={{ textAlign: 'center', marginTop: '10px' }}>
+            <span className="font-body" style={{ fontSize: '12.5px', color: 'var(--faint)' }}>
+              Investor enquiry?{' '}
+            </span>
+            <a
+              href="mailto:info@armtechnologies.ltd?subject=Investor%20Enquiry"
+              className="font-body"
+              style={{ fontSize: '12.5px', color: 'var(--muted)', textDecoration: 'underline' }}
+            >
+              Email us directly
+            </a>
+          </div>
         </div>
       </div>
-    </section>
+      </section>
+    </FluidBackdrop>
   );
 }

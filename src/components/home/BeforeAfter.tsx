@@ -1,4 +1,6 @@
-import { useStaggerReveal } from '../../lib/motion';
+import { useRef } from 'react';
+import { ArrowRight } from 'lucide-react';
+import { useReveal, useStaggerReveal, useScrollScrub } from '../../lib/motion';
 
 /* The transformation panel. Each row is a real workflow a hotel manager
    already does — the LEFT column is today, the RIGHT column is Virgo. */
@@ -25,6 +27,28 @@ const ROWS = [
   },
 ];
 
+/* A small inline chip, reusing the tag language from the hero subcopy so the
+   same device (named system → violet pill) reads consistently wherever it
+   appears on the page, rather than inventing a second visual convention. */
+function Chip({ children, tone }: { children: string; tone: 'before' | 'after' }) {
+  const isAfter = tone === 'after';
+  return (
+    <span
+      className="font-mono"
+      style={{
+        display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap',
+        fontSize: '12.5px', fontWeight: 700, letterSpacing: '0.2px',
+        color: isAfter ? 'var(--primary)' : 'var(--muted)',
+        background: isAfter ? 'var(--primary-wash)' : 'var(--surface)',
+        border: `1px solid ${isAfter ? 'var(--primary-line)' : 'var(--line)'}`,
+        borderRadius: '6px', padding: '3px 9px', margin: '2px 2px',
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
 function Hatch({ color }: { color: string }) {
   return (
     <div
@@ -42,12 +66,21 @@ function Hatch({ color }: { color: string }) {
 
 export default function BeforeAfter() {
   const headRef = useStaggerReveal<HTMLDivElement>({ y: 24, duration: 600, staggerDelay: 90 });
+  const stripRef = useReveal<HTMLDivElement>({ y: 20, duration: 650, delay: 120 });
   const rowsRef = useStaggerReveal<HTMLDivElement>({ y: 22, duration: 620, staggerDelay: 130 });
+
+  // A progress line down the left of the rows, filling violet as you scroll
+  // through them — the "before → after" idea rendered as motion, not just copy.
+  const scrubTrackRef = useRef<HTMLDivElement>(null);
+  const fillRef = useScrollScrub<HTMLDivElement>(
+    { scaleY: [0, 1] },
+    { container: scrubTrackRef }
+  );
 
   return (
     <section
       style={{
-        background: 'var(--ground)',
+        background: 'var(--wash)',
         padding: 'clamp(64px, 8vw, 100px) 0',
       }}
     >
@@ -66,7 +99,11 @@ export default function BeforeAfter() {
             className="font-display"
             style={{
               opacity: 0, fontWeight: 800,
-              fontSize: 'clamp(30px, 4.4vw, 52px)', color: 'var(--ink)',
+              // Floor is 27px, not 30px: "Same tasks. Fewer steps." measures
+              // 357px at 30px, which overflows a 342px phone column — and the
+              // forced <br> after it means the line can't rebalance, so it
+              // wraps raggedly instead. 27px brings it to ~321px.
+              fontSize: 'clamp(27px, 4.4vw, 52px)', color: 'var(--ink)',
               lineHeight: 1.04,
             }}
           >
@@ -76,11 +113,72 @@ export default function BeforeAfter() {
           </h2>
         </div>
 
-        <div ref={rowsRef} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {ROWS.map(row => (
+        {/* The aggregate line — a single honest count pulled straight from the
+            four rows below (the systems those "before" columns actually name),
+            not an invented company-wide metric. Virgo has no customers yet to
+            source a real stat from, so this is the one summary claim that's
+            true today rather than borrowed credibility. */}
+        <div
+          ref={stripRef}
+          style={{
+            opacity: 0,
+            display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center',
+            gap: '10px', textAlign: 'center',
+            maxWidth: '760px', margin: '0 auto 40px',
+            padding: '18px 22px',
+            background: 'var(--surface)', border: '1px solid var(--line-soft)',
+            borderRadius: 'var(--radius-card)',
+          }}
+        >
+          <span className="font-body" style={{ fontSize: '13.5px', color: 'var(--faint)', marginRight: '2px' }}>
+            {/* "these four tasks" would be inaccurate on mobile, where only
+                two rows render — this phrasing holds regardless of count. */}
+            Across tasks like these, today it's
+          </span>
+          <span>
+            <Chip tone="before">PMS</Chip>
+            <Chip tone="before">Xero</Chip>
+            <Chip tone="before">WhatsApp</Chip>
+            <Chip tone="before">Spreadsheet</Chip>
+          </span>
+          <ArrowRight size={15} style={{ color: 'var(--faint)', flexShrink: 0 }} />
+          <span>
+            <Chip tone="after">Virgo</Chip>
+          </span>
+          <span className="font-body" style={{ fontSize: '13.5px', color: 'var(--faint)', marginLeft: '2px' }}>
+            for every one of them.
+          </span>
+        </div>
+
+        <div ref={scrubTrackRef} style={{ position: 'relative' }}>
+          {/* Scroll-linked fill — hidden on mobile where there's no room for it. */}
+          <div
+            aria-hidden
+            className="hidden md:block"
+            style={{
+              position: 'absolute', left: '-18px', top: 0, bottom: 0, width: '3px',
+              background: 'var(--line-soft)', borderRadius: '2px', overflow: 'hidden',
+            }}
+          >
+            <div
+              ref={fillRef}
+              style={{
+                width: '100%', height: '100%', background: 'var(--primary)',
+                transform: 'scaleY(0)', transformOrigin: 'top center',
+              }}
+            />
+          </div>
+
+          <div ref={rowsRef} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {ROWS.map((row, i) => (
             <div
               key={row.task}
-              className="grid grid-cols-1 md:grid-cols-[1fr_24px_1fr] items-stretch"
+              /* Four full before/after blocks was the second-longest stretch
+                 of unbroken scrolling on mobile. Rows 1 and 3 (a reactive
+                 query, and a proactive digest) already span both modes Virgo
+                 works in, so 2 and 4 are desktop-only rather than repeating
+                 that same shape. */
+              className={`${i === 1 || i === 3 ? 'hidden md:grid' : 'grid'} grid-cols-1 md:grid-cols-[1fr_24px_1fr] items-stretch`}
               style={{
                 opacity: 0,
                 background: 'var(--surface)',
@@ -89,12 +187,14 @@ export default function BeforeAfter() {
                 overflow: 'hidden',
               }}
             >
-              {/* Before */}
+              {/* Before — deliberately cooler and flatter than After, so the
+                  two sides read as different states at a glance, not just
+                  different text. */}
               <div
                 style={{
                   position: 'relative',
                   padding: 'clamp(22px, 2.6vw, 32px)',
-                  background: 'var(--surface-alt)',
+                  background: 'var(--ground-deep)',
                   borderRight: '1px solid var(--line-soft)',
                 }}
               >
@@ -140,8 +240,14 @@ export default function BeforeAfter() {
                 </svg>
               </div>
 
-              {/* After */}
-              <div style={{ position: 'relative', padding: 'clamp(22px, 2.6vw, 32px)' }}>
+              {/* After — a violet wash, warmer and more alive than the flat
+                  grey of Before. */}
+              <div
+                style={{
+                  position: 'relative', padding: 'clamp(22px, 2.6vw, 32px)',
+                  background: 'linear-gradient(135deg, var(--primary-wash) 0%, var(--surface) 70%)',
+                }}
+              >
                 <Hatch color="var(--primary)" />
                 <div
                   className="font-mono"
@@ -169,7 +275,8 @@ export default function BeforeAfter() {
                 </p>
               </div>
             </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>
