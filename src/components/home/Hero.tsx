@@ -65,7 +65,7 @@ export default function Hero() {
       />
 
       <div className="relative max-w-[1240px] mx-auto px-6 grid lg:grid-cols-2 gap-x-16 gap-y-14 items-center">
-        <div>
+        <div className="flex flex-col">
           {/* Parent-brand lockup: the product is named first, the company
               endorses it. Virgo has no customers yet, so A.R.M's name carries
               the credibility — the track record itself lives on /company. */}
@@ -94,15 +94,26 @@ export default function Hero() {
               marginBottom: '22px',
             }}
           >
-            Run every system
-            <br />
+            {/* Below md this breaks after "system" so the CTA (reordered
+                right after the heading on mobile, see below) has a short
+                last line to sit near. At md+ the br is display:none and
+                the {' '} keeps the words apart, so it reads exactly like
+                the original single-line-wrapping headline. */}
+            Run every system{' '}
+            <br className="md:hidden" />
             with one question.
           </h1>
 
           {/* One action, not two — a single, unambiguous next step. Placeholder
               target: scrolls to the existing pilot form at #pilot until a real
-              booking link (Calendly or similar) is supplied to swap in here. */}
-          <div ref={ctaRef} style={{ opacity: 0, marginBottom: '32px' }}>
+              booking link (Calendly or similar) is supplied to swap in here.
+              Ordered right after the heading on mobile, back to its original
+              spot after the subcopy from md up. */}
+          <div
+            ref={ctaRef}
+            className="order-3 md:order-4 mb-8 md:mb-0"
+            style={{ opacity: 0, display: 'flex', gap: '12px', flexWrap: 'wrap' }}
+          >
             <a href="#pilot" className="pill pill-glass">
               Book a demo <ArrowRight size={15} />
             </a>
@@ -110,7 +121,7 @@ export default function Hero() {
 
           <p
             ref={subRef}
-            className="font-body"
+            className="font-body order-4 md:order-3"
             style={{
               opacity: 0,
               fontSize: 'clamp(16px, 1.4vw, 19px)',
