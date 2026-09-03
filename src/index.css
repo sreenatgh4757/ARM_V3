@@ -214,24 +214,6 @@
     transform: translateX(65%);
   }
 
-  /* Sized down from the standard .pill so it can ride the gap left by the
-     hero headline's last line on narrow screens; from md up there's no
-     gap to share the line with (the headline fits on one line), so it
-     drops below the text and can afford to be full-size again. */
-  .hero-inline-cta {
-    padding: 9px 18px;
-    min-height: 40px;
-    font-size: 14px;
-  }
-
-  @media (min-width: 768px) {
-    .hero-inline-cta {
-      padding: 14px 28px;
-      min-height: 50px;
-      font-size: 15px;
-    }
-  }
-
   /* Shimmering headline text — a slow gradient sweep through the site's own
      violet/lime accent pair (the same two colours as the Hero's glow), rather
      than a generic rainbow or purple-to-blue cliché. Reserved for one-off
