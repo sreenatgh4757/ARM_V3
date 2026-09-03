@@ -57,7 +57,7 @@ export default function Navbar() {
     useMountAnimation<HTMLDivElement>(mobileMenuOpen, { duration: 240 });
 
   useEffect(() => {
-    if (!mobileMenuOpen || !mobileLinksRef.current) return;
+    if (!mobileMenuOpen || !showMobileOverlay || !mobileLinksRef.current) return;
     const children = Array.from(mobileLinksRef.current.children) as HTMLElement[];
     animate(children, {
       opacity: [0, 1],
@@ -65,7 +65,7 @@ export default function Navbar() {
       duration: prefersReducedMotion() ? 1 : 380,
       delay: prefersReducedMotion() ? 0 : stagger(60),
     });
-  }, [mobileMenuOpen]);
+  }, [mobileMenuOpen, showMobileOverlay]);
 
   return (
     <>
